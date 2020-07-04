@@ -26,27 +26,35 @@ def get_sr_and_score(imset, model, min_L=16):
         scPSNR: float, shift cPSNR score
     '''
     
-    if imset.__class__ is ImageSet:
-        collator = collateFunction(min_L=min_L)
-        lrs, alphas, hrs, hr_maps, names = collator([imset])
-    elif isinstance(imset, tuple):  # imset is a tuple of batches
-        lrs, alphas, hrs, hr_maps, names = imset
+#    if imset.__class__ is ImageSet:
+#        collator = collateFunction(min_L=min_L)
+#        lrs, alphas, hrs, hr_maps, names = collator([imset])
+#    elif isinstance(imset, tuple):  # imset is a tuple of batches
+#        lrs, alphas, hrs, hr_maps, names = imset
+
+    lrs = np.zeros(1, min_L, imset[0].shape[0], imset[0].shape[1])
+
+    for i in range(min_L):
+        lrs[0][i] = imset[i]
+
+    #lrs = imset()
+    alphas = torch.from_numpy(np.zeros(1, min_L)) #torch.tensor
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     lrs = lrs.float().to(device)
     alphas = alphas.float().to(device)
-    
+
     sr = model(lrs, alphas)[:, 0]
     sr = sr.detach().cpu().numpy()[0]
 
-    if len(hrs) > 0:
-        scPSNR = shift_cPSNR(sr=np.clip(sr, 0, 1),
-                             hr=hrs.numpy()[0],
-                             hr_map=hr_maps.numpy()[0])
-    else:
-        scPSNR = None
+#    if len(hrs) > 0:
+#        scPSNR = shift_cPSNR(sr=np.clip(sr, 0, 1),
+#                             hr=hrs.numpy()[0],
+#                             hr_map=hr_maps.numpy()[0])
+#    else:
+#        scPSNR = None
 
-    return sr, scPSNR
+    return sr    #, scPSNR
 
 
 def load_data(config_file_path, val_proportion=0.10, top_k=-1):
@@ -205,9 +213,9 @@ class Model(object):
     def load_checkpoint(self, checkpoint_file):
         self.model = load_model(self.config, checkpoint_file)
         
-    def __call__(self, imset):
-        sr, scPSNR = get_sr_and_score(imset, self.model, min_L=self.config['training']['min_L'])
-        return sr, scPSNR
+    def __call__(self, imset, custom_min_L = 16):
+        sr = get_sr_and_score(imset, self.model, min_L= custom_min_L)#self.config['training']['min_L'])        #  scPSNR
+        return sr       # scPSNR
     
     def evaluate(self, train_dataset, val_dataset, test_dataset, baseline_cpsnrs):                
         scores, clearance, part = evaluate(self.model, train_dataset, val_dataset, test_dataset, 
