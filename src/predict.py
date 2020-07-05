@@ -32,7 +32,7 @@ def get_sr_and_score(imset, model, min_L=16):
 #    elif isinstance(imset, tuple):  # imset is a tuple of batches
 #        lrs, alphas, hrs, hr_maps, names = imset
 
-    lrs = np.zeros((1, min_L, imset[0].shape[0], imset[0].shape[1]))
+    lrs = np.zeros((1, min_L, imset[0].shape[0], imset[0].shape[1], 3))
 
     for i in range(min_L):
         lrs[0][i] = imset[i]
