@@ -40,18 +40,20 @@ def get_sr_and_score(imset, model, min_L=16):
 
     sr = np.zeros((imset[0].shape[0] * 3, imset[0].shape[1] * 3, 3))
 
+
     for i in range(3):
         cur_lrs = np.zeros((1, min_L, imset[0].shape[0], imset[0].shape[1]))
 
         for j in range(min_L):
-            cur_lrs[0][j] = imset[j][:][:][i]
+            #print(imset[j].shape)
+            cur_lrs[0][j] = imset[j][:, :, i]
 
         cur_lrs = cur_lrs.float().to(device)
 
         cur_sr = model(cur_lrs, alphas)[:, 0]
         cur_sr = cur_sr.detach().cpu().numpy()[0]
 
-        sr[:][:][i] = cur_sr[:][:]
+        sr[:, :, i] = cur_sr[:, :]
 
 #    if len(hrs) > 0:
 #        scPSNR = shift_cPSNR(sr=np.clip(sr, 0, 1),
