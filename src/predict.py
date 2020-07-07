@@ -48,6 +48,7 @@ def get_sr_and_score(imset, model, min_L=16):
             #print(imset[j].shape)
             cur_lrs[0][j] = imset[j][:, :, i]
 
+        cur_lrs = torch.from_numpy(cur_lrs)
         cur_lrs = cur_lrs.float().to(device)
 
         cur_sr = model(cur_lrs, alphas)[:, 0]
