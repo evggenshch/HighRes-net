@@ -88,6 +88,8 @@ def cSSIM(sr, hr):
     if hr.dtype.type is np.uint16:
         hr = hr / np.iinfo(np.uint16).max
 
+    print(sr.shape)
+    print(hr.shape)
 
     cSSIM = ssim(sr, hr, multichannel=True)
 
