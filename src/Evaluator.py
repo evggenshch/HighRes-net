@@ -89,7 +89,7 @@ def cSSIM(sr, hr):
         hr = hr / np.iinfo(np.uint16).max
 
 
-    cSSIM = ssim(sr, hr)
+    cSSIM = ssim(sr, hr, multichannel=True)
 
 #    n_clear = np.sum(hr_map, axis=(1, 2))  # number of clear pixels in the high-res patch
 #    diff = hr - sr
