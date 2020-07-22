@@ -8,13 +8,14 @@ from skimage import io, img_as_uint
 from tqdm import tqdm_notebook, tqdm
 from zipfile import ZipFile
 import torch
+import cv2
 from DataLoader import ImagesetDataset, ImageSet
 from DeepNetworks.HRNet import HRNet
-from Evaluator import shift_cPSNR
+from Evaluator import shift_cPSNR, cSSIM
 from utils import getImageSetDirectories, readBaselineCPSNR, collateFunction
 
 
-def get_sr_and_score(imset, model, min_L=16):
+def get_sr_and_score(imset, model, aposterior_gt, min_L=16):
     '''
     Super resolves an imset with a given model.
     Args:
@@ -26,44 +27,49 @@ def get_sr_and_score(imset, model, min_L=16):
         scPSNR: float, shift cPSNR score
     '''
     
-#    if imset.__class__ is ImageSet:
-#        collator = collateFunction(min_L=min_L)
-#        lrs, alphas, hrs, hr_maps, names = collator([imset])
-#    elif isinstance(imset, tuple):  # imset is a tuple of batches
-#        lrs, alphas, hrs, hr_maps, names = imset
+    if imset.__class__ is ImageSet:
+        collator = collateFunction(min_L=min_L)
+        lrs, alphas, hrs, hr_maps, names = collator([imset])
+    elif isinstance(imset, tuple):  # imset is a tuple of batches
+        lrs, alphas, hrs, hr_maps, names = imset
 
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    alphas = torch.from_numpy(np.zeros((1, min_L)))  # torch.tensor
-    alphas = alphas.float().to(device)
+    #alphas = torch.from_numpy(np.zeros((1, min_L)))  # torch.tensor
+    #    sr = np.zeros((imset[0].shape[0] * 3, imset[0].shape[1] * 3, 3))
 
-    sr = np.zeros((imset[0].shape[0] * 3, imset[0].shape[1] * 3, 3))
+    #    for i in range(3):
+    #        cur_lrs = np.zeros((1, min_L, imset[0].shape[0], imset[0].shape[1]))
 
+    #        for j in range(min_L):
+    #            cur_lrs[0][j] = imset[j][:, :, i]
 
-    for i in range(3):
-        cur_lrs = np.zeros((1, min_L, imset[0].shape[0], imset[0].shape[1]))
+    #        cur_lrs = torch.from_numpy(cur_lrs)
+    #        cur_lrs = cur_lrs.float().to(device)
 
-        for j in range(min_L):
-            #print(imset[j].shape)
-            cur_lrs[0][j] = imset[j][:, :, i]
+    #        cur_sr = model(cur_lrs, alphas)[:, 0]
+    #        cur_sr = cur_sr.detach().cpu().numpy()[0]
 
-        cur_lrs = torch.from_numpy(cur_lrs)
-        cur_lrs = cur_lrs.float().to(device)
+    #        sr[:, :, i] = cur_sr[:, :]
 
-        cur_sr = model(cur_lrs, alphas)[:, 0]
-        cur_sr = cur_sr.detach().cpu().numpy()[0]
+    lrs = lrs[:min_L, :].float().to(device)
+    alphas = alphas[:min_L, :].float().to(device)
 
-        sr[:, :, i] = cur_sr[:, :]
+    sr = model(lrs, alphas)[:, 0]
+    sr = sr.detach().cpu().numpy()[0]
 
-#    if len(hrs) > 0:
-#        scPSNR = shift_cPSNR(sr=np.clip(sr, 0, 1),
-#                             hr=hrs.numpy()[0],
-#                             hr_map=hr_maps.numpy()[0])
-#    else:
-#        scPSNR = None
+    if len(hrs) > 0:
+        scPSNR = shift_cPSNR(sr=np.clip(sr, 0, 1),
+                             hr=hrs.numpy()[0],
+                             hr_map=hr_maps.numpy()[0])
+    else:
+        scPSNR = None
 
-    return sr    #, scPSNR
+    ssim = cSSIM(sr=np.clip(sr, 0, 1), hr=hrs.numpy()[0])
+    aposterior_ssim = cSSIM(sr=np.clip(sr, 0, 1), hr=np.clip(aposterior_gt, 0, 1))
+
+    return sr, scPSNR, ssim, aposterior_ssim
 
 
 def load_data(config_file_path, val_proportion=0.10, top_k=-1):
@@ -222,9 +228,9 @@ class Model(object):
     def load_checkpoint(self, checkpoint_file):
         self.model = load_model(self.config, checkpoint_file)
         
-    def __call__(self, imset, custom_min_L = 16):
-        sr = get_sr_and_score(imset, self.model, min_L= custom_min_L)#self.config['training']['min_L'])        #  scPSNR
-        return sr       # scPSNR
+    def __call__(self, imset, aposterior_gt, custom_min_L = 16):
+        sr, scPSNR, gt_SSIM, aposterior_SSIM = get_sr_and_score(imset, self.model, aposterior_gt, min_L= custom_min_L)#self.config['training']['min_L'])
+        return sr, scPSNR, gt_SSIM, aposterior_SSIM
     
     def evaluate(self, train_dataset, val_dataset, test_dataset, baseline_cpsnrs):                
         scores, clearance, part = evaluate(self.model, train_dataset, val_dataset, test_dataset, 

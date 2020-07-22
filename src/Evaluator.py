@@ -5,6 +5,7 @@ import cv2
 
 import numpy as np
 from tqdm import tqdm
+from skimage.metrics import structural_similarity as ssim
 
 from DataLoader import get_patch
 
@@ -44,6 +45,7 @@ def cPSNR(sr, hr, hr_map):
     return cPSNR
 
 
+
 def patch_iterator(img, positions, size):
     """Iterator across square patches of `img` located in `positions`."""
     for x, y in positions:
@@ -73,13 +75,11 @@ def shift_cPSNR(sr, hr, hr_map, border_w=3):
     max_cPSNR = np.max(site_cPSNR, axis=0)
     return max_cPSNR
 
-def SSIM(sr, hr, hr_map):
-
+def cSSIM(sr, hr):
 
     if len(sr.shape) == 2:
         sr = sr[None, ]
         hr = hr[None, ]
-        hr_map = hr_map[None, ]
 
     if sr.dtype.type is np.uint16:  # integer array is in the range [0, 65536]
         sr = sr / np.iinfo(np.uint16).max  # normalize in the range [0, 1]
@@ -88,16 +88,19 @@ def SSIM(sr, hr, hr_map):
     if hr.dtype.type is np.uint16:
         hr = hr / np.iinfo(np.uint16).max
 
-    n_clear = np.sum(hr_map, axis=(1, 2))  # number of clear pixels in the high-res patch
-    diff = hr - sr
-    bias = np.sum(diff * hr_map, axis=(1, 2)) / n_clear  # brightness bias
-    cMSE = np.sum(np.square((diff - bias[:, None, None]) * hr_map), axis=(1, 2)) / n_clear
-    cPSNR = -10 * np.log10(cMSE)  # + 1e-10)
 
-    if cPSNR.shape[0] == 1:
-        cPSNR = cPSNR[0]
+    cSSIM = ssim(sr, hr)
 
-    return cPSNR
+#    n_clear = np.sum(hr_map, axis=(1, 2))  # number of clear pixels in the high-res patch
+#    diff = hr - sr
+#    bias = np.sum(diff * hr_map, axis=(1, 2)) / n_clear  # brightness bias
+#    cMSE = np.sum(np.square((diff - bias[:, None, None]) * hr_map), axis=(1, 2)) / n_clear
+#    cPSNR = -10 * np.log10(cMSE)  # + 1e-10)
+
+#    if cPSNR.shape[0] == 1:
+#        cPSNR = cPSNR[0]
+
+    return cSSIM
 
 def shift_SSIM(sr, hr, hr_map):
     pass
