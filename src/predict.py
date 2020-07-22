@@ -67,7 +67,12 @@ def get_sr_and_score(imset, model, aposterior_gt, min_L=16):
         scPSNR = None
 
     ssim = cSSIM(sr=np.clip(sr, 0, 1), hr=hrs.numpy()[0])
-    aposterior_ssim = cSSIM(sr=np.clip(sr, 0, 1), hr=np.clip(aposterior_gt, 0, 1))
+
+    if (aposterior_gt == None):
+        aposterior_ssim = 1.0
+    else:
+        aposterior_ssim = cSSIM(sr=np.clip(sr, 0, 1), hr=np.clip(aposterior_gt, 0, 1))
+
 
     return sr, scPSNR, ssim, aposterior_ssim
 
