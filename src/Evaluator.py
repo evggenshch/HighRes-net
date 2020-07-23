@@ -77,9 +77,9 @@ def shift_cPSNR(sr, hr, hr_map, border_w=3):
 
 def cSSIM(sr, hr):
 
-    if len(sr.shape) == 2:
-        sr = sr[None, ]
-        hr = hr[None, ]
+    #if len(sr.shape) == 2:
+    #    sr = sr[None, ]
+    #    hr = hr[None, ]
 
     if sr.dtype.type is np.uint16:  # integer array is in the range [0, 65536]
         sr = sr / np.iinfo(np.uint16).max  # normalize in the range [0, 1]
@@ -91,7 +91,7 @@ def cSSIM(sr, hr):
     print(sr.shape)
     print(hr.shape)
 
-    cSSIM = ssim(sr, hr, multichannel=True)
+    cSSIM = ssim(sr, hr, multichannel=True, data_range=1.0)
 
 #    n_clear = np.sum(hr_map, axis=(1, 2))  # number of clear pixels in the high-res patch
 #    diff = hr - sr
