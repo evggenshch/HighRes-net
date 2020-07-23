@@ -71,7 +71,7 @@ def get_sr_and_score(imset, model, aposterior_gt, min_L=16):
  #   print("APGT SHAPE: ", aposterior_gt.shape)
  #   print("APGT: ", aposterior_gt)
 
-    if (type(aposterior_gt) == "NoneType"):
+    if (str(type(aposterior_gt)) == "<class 'NoneType'>"):
         aposterior_ssim = 1.0
     else:
         aposterior_ssim = cSSIM(sr=np.clip(sr, 0, 1), hr=np.clip(aposterior_gt, 0, 1))
