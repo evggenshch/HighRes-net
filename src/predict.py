@@ -28,7 +28,7 @@ def get_sr_and_score(imset, model, aposterior_gt, min_L=16):
     '''
     
     if imset.__class__ is ImageSet:
-        collator = collateFunction(min_L=min_L)
+        collator = collateFunction(min_L=32)
         lrs, alphas, hrs, hr_maps, names = collator([imset])
     elif isinstance(imset, tuple):  # imset is a tuple of batches
         lrs, alphas, hrs, hr_maps, names = imset
