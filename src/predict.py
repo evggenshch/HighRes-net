@@ -15,7 +15,7 @@ from Evaluator import shift_cPSNR, cSSIM
 from utils import getImageSetDirectories, readBaselineCPSNR, collateFunction
 
 
-def get_sr_and_score(imset, model, aposterior_gt, min_L=16):
+def get_sr_and_score(imset, model, aposterior_gt, num_frames, min_L=16):
     '''
     Super resolves an imset with a given model.
     Args:
@@ -26,38 +26,16 @@ def get_sr_and_score(imset, model, aposterior_gt, min_L=16):
         sr: tensor (1, C_out, W, H), super resolved image
         scPSNR: float, shift cPSNR score
     '''
-    
+
     if imset.__class__ is ImageSet:
-        collator = collateFunction(min_L)
+        collator = collateFunction(num_frames, min_L=min_L)
         lrs, alphas, hrs, hr_maps, names = collator([imset])
     elif isinstance(imset, tuple):  # imset is a tuple of batches
         lrs, alphas, hrs, hr_maps, names = imset
 
-
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-    #alphas = torch.from_numpy(np.zeros((1, min_L)))  # torch.tensor
-    #    sr = np.zeros((imset[0].shape[0] * 3, imset[0].shape[1] * 3, 3))
-
-    #    for i in range(3):
-    #        cur_lrs = np.zeros((1, min_L, imset[0].shape[0], imset[0].shape[1]))
-
-    #        for j in range(min_L):
-    #            cur_lrs[0][j] = imset[j][:, :, i]
-
-    #        cur_lrs = torch.from_numpy(cur_lrs)
-    #        cur_lrs = cur_lrs.float().to(device)
-
-    #        cur_sr = model(cur_lrs, alphas)[:, 0]
-    #        cur_sr = cur_sr.detach().cpu().numpy()[0]
-
-    #        sr[:, :, i] = cur_sr[:, :]
-
-    lrs = lrs[:, :min_L, :, :].float().to(device)
-    alphas = alphas[:, :min_L].float().to(device)
-
-    print("LRS SHAPEE: ", lrs.shape)
-    print("ALPHAS SHAPEE: ", alphas.shape)
+    lrs = lrs.float().to(device)
+    alphas = alphas.float().to(device)
 
     sr = model(lrs, alphas)[:, 0]
     sr = sr.detach().cpu().numpy()[0]
@@ -71,14 +49,13 @@ def get_sr_and_score(imset, model, aposterior_gt, min_L=16):
 
     ssim = cSSIM(sr=np.clip(sr, 0, 1), hr=hrs.numpy()[0])
 
- #   print("APGT SHAPE: ", aposterior_gt.shape)
- #   print("APGT: ", aposterior_gt)
+    #   print("APGT SHAPE: ", aposterior_gt.shape)
+    #   print("APGT: ", aposterior_gt)
 
     if (str(type(aposterior_gt)) == "<class 'NoneType'>"):
         aposterior_ssim = 1.0
     else:
         aposterior_ssim = cSSIM(sr=np.clip(sr, 0, 1), hr=np.clip(aposterior_gt, 0, 1))
-
 
     return sr, scPSNR, ssim, aposterior_ssim
 
@@ -239,8 +216,8 @@ class Model(object):
     def load_checkpoint(self, checkpoint_file):
         self.model = load_model(self.config, checkpoint_file)
         
-    def __call__(self, imset, aposterior_gt, custom_min_L = 16):
-        sr, scPSNR, gt_SSIM, aposterior_SSIM = get_sr_and_score(imset, self.model, aposterior_gt, min_L= custom_min_L)#self.config['training']['min_L'])
+    def __call__(self, imset, aposterior_gt, num_frames, custom_min_L = 16):
+        sr, scPSNR, gt_SSIM, aposterior_SSIM = get_sr_and_score(imset, self.model, aposterior_gt, num_frames, min_L= custom_min_L)#self.config['training']['min_L'])
         return sr, scPSNR, gt_SSIM, aposterior_SSIM
     
     def evaluate(self, train_dataset, val_dataset, test_dataset, baseline_cpsnrs):                
