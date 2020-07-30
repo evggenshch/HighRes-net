@@ -95,6 +95,11 @@ class collateFunction():
 
 
         padded_lr_batch = lr_batch
+        padded_lr_batch = torch.stack(padded_lr_batch, dim=0)
+        alpha_batch = torch.stack(alpha_batch, dim=0)
+        hr_batch = torch.stack(hr_batch, dim=0)
+        hm_batch = torch.stack(hm_batch, dim=0)
+        isn_batch = torch.stack(isn_batch, dim=0)
 
  #       for imageset in batch:#
 
