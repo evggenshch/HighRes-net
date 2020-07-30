@@ -54,7 +54,7 @@ def get_sr_and_score(imset, model, aposterior_gt, min_L=16):
     #        sr[:, :, i] = cur_sr[:, :]
 
     lrs = lrs[:, :min_L, :, :].float().to(device)
-    alphas = alphas[:, min_L].float().to(device)
+    alphas = alphas[:, :min_L].float().to(device)
 
     print("LRS SHAPEE: ", lrs.shape)
     print("ALPHAS SHAPEE: ", alphas.shape)
