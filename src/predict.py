@@ -53,7 +53,7 @@ def get_sr_and_score(imset, model, aposterior_gt, min_L=16):
 
     #        sr[:, :, i] = cur_sr[:, :]
 
-    lrs = lrs[0, :min_L, :].float().to(device)
+    lrs = lrs[:, :min_L, :, :].float().to(device)
     alphas = alphas[:min_L, :].float().to(device)
 
     sr = model(lrs, alphas)[:, 0]
