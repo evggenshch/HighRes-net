@@ -49,7 +49,7 @@ def getImageSetDirectories(data_dir):
 class collateFunction():
     """ Util class to create padded batches of data. """
 
-    def __init__(self, min_L=32):
+    def __init__(self, min_L=16):
         """
         Args:
             min_L: int, pad length

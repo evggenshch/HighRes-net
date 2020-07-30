@@ -28,7 +28,7 @@ def get_sr_and_score(imset, model, aposterior_gt, min_L=16):
     '''
     
     if imset.__class__ is ImageSet:
-        collator = collateFunction(min_L=32)
+        collator = collateFunction(min_L)
         lrs, alphas, hrs, hr_maps, names = collator([imset])
     elif isinstance(imset, tuple):  # imset is a tuple of batches
         lrs, alphas, hrs, hr_maps, names = imset
@@ -53,8 +53,8 @@ def get_sr_and_score(imset, model, aposterior_gt, min_L=16):
 
     #        sr[:, :, i] = cur_sr[:, :]
 
-    lrs = lrs[:min_L, :].float().to(device)
-    alphas = alphas[:min_L, :].float().to(device)
+    lrs = lrs[0, :min_L, :].float().to(device)
+    alphas = alphas[0, :min_L, :].float().to(device)
 
     sr = model(lrs, alphas)[:, 0]
     sr = sr.detach().cpu().numpy()[0]
