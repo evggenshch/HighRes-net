@@ -248,6 +248,12 @@ class Model(object):
 
         results = benchmark(baseline_cpsnrs, scores, part, clearance)
         return results
+
+    def custom_evaluate(self, train_dataset, val_dataset, test_dataset, baseline_cpsnrs, num_frames, min_L):
+        scores, clearance, part = custom_evaluate(self.model, train_dataset, val_dataset, test_dataset, num_frames, min_L)
+
+        results = benchmark(baseline_cpsnrs, scores, part, clearance)
+        return results
     
     def generate_submission_file(self, imset_dataset, out='../submission'):
         generate_submission_file(self.model, imset_dataset, out='../submission')
