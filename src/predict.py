@@ -146,6 +146,28 @@ def evaluate(model, train_dataset, val_dataset, test_dataset, min_L=16):
     return scores, clerances, part
 
 
+def custom_evaluate(model, train_dataset, val_dataset, test_dataset, num_frames, min_L=16):
+
+    model.eval()
+    scores = {}
+    clerances = {}
+    part = {}
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    for s, imset_dataset in [('train', train_dataset),
+                             ('val', val_dataset),
+                             ('test', test_dataset)]:
+
+        if __IPYTHON__:
+            tqdm = tqdm_notebook
+
+        for imset in tqdm(imset_dataset):
+            sr, scPSNR, ssim, aposterior_ssim = get_sr_and_score(imset, model, None, num_frames, min_L)
+            #  imset, model, aposterior_gt, num_frames, min_L=16
+            scores[imset['name']] = scPSNR
+            clerances[imset['name']] = imset['clearances']
+            part[imset['name']] = s
+    return scores, clerances, part
+
 def benchmark(baseline_cpsnrs, scores, part, clerances):
     '''
     Benchmark scores against ESA baseline.

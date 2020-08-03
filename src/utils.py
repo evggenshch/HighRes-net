@@ -85,7 +85,9 @@ class collateFunction():
         for imageset in batch:
 
             lrs = imageset['lr']
-            lrs = lrs[:self.num_frames, :, :]
+
+            if (self.num_frames <= lrs.shape[0]):
+                lrs = lrs[:self.num_frames, :, :]
             L, H, W = lrs.shape
 
             if L >= self.min_L:  # pad input to top_k
