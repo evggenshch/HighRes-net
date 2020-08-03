@@ -40,6 +40,9 @@ def get_sr_and_score(imset, model, aposterior_gt, num_frames, min_L=16):
     sr = model(lrs, alphas)[:, 0]
     sr = sr.detach().cpu().numpy()[0]
 
+    print("HRS LEN: ", len(hrs))
+    print("HRS: ", hrs)
+
     if len(hrs) > 0:
         scPSNR = shift_cPSNR(sr=np.clip(sr, 0, 1),
                              hr=hrs.numpy()[0],
