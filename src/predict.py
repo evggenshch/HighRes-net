@@ -40,6 +40,11 @@ def get_sr_and_score(imset, model, aposterior_gt, num_frames, min_L=16):
     sr = model(lrs, alphas)[:, 0]
     sr = sr.detach().cpu().numpy()[0]
 
+    n_clear = np.sum(hr_maps.numpy()[0], axis=(1, 2))  # number of clear pixels in the high-res patch
+    diff = hrs.numpy()[0] - sr
+    bias = np.sum(diff * hr_maps.numpy()[0], axis=(1, 2)) / n_clear  # brightness bias
+    cMSE = np.sum(np.square((diff - bias[:, None, None]) * hr_maps.numpy()[0]), axis=(1, 2)) / n_clear
+
 #    print("HRS LEN: ", len(hrs))
 #    print("HRS: ", hrs)
 
@@ -60,7 +65,7 @@ def get_sr_and_score(imset, model, aposterior_gt, num_frames, min_L=16):
     else:
         aposterior_ssim = cSSIM(sr=np.clip(sr, 0, 1), hr=np.clip(aposterior_gt, 0, 1))
 
-    return sr, scPSNR, ssim, aposterior_ssim
+    return sr, scPSNR, ssim, aposterior_ssim, cMSE
 
 
 def load_data(config_file_path, val_proportion=0.10, top_k=-1):
@@ -242,8 +247,8 @@ class Model(object):
         self.model = load_model(self.config, checkpoint_file)
         
     def __call__(self, imset, aposterior_gt, num_frames, custom_min_L = 16):
-        sr, scPSNR, gt_SSIM, aposterior_SSIM = get_sr_and_score(imset, self.model, aposterior_gt, num_frames, min_L= custom_min_L)#self.config['training']['min_L'])
-        return sr, scPSNR, gt_SSIM, aposterior_SSIM
+        sr, scPSNR, gt_SSIM, aposterior_SSIM, cMSE = get_sr_and_score(imset, self.model, aposterior_gt, num_frames, min_L= custom_min_L)#self.config['training']['min_L'])
+        return sr, scPSNR, gt_SSIM, aposterior_SSIM, cMSE
     
     def evaluate(self, train_dataset, val_dataset, test_dataset, baseline_cpsnrs):                
         scores, clearance, part = evaluate(self.model, train_dataset, val_dataset, test_dataset, 
