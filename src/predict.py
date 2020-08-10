@@ -40,10 +40,20 @@ def get_sr_and_score(imset, model, aposterior_gt, num_frames, min_L=16):
     sr = model(lrs, alphas)[:, 0]
     sr = sr.detach().cpu().numpy()[0]
 
-    n_clear = np.sum(hr_maps.numpy()[0], axis=(1, 2))  # number of clear pixels in the high-res patch
-    diff = hrs.numpy()[0] - sr
-    bias = np.sum(diff * hr_maps.numpy()[0], axis=(1, 2)) / n_clear  # brightness bias
-    cMSE = np.sum(np.square((diff - bias[:, None, None]) * hr_maps.numpy()[0]), axis=(1, 2)) / n_clear
+
+    mse_hrs = hrs.numpy()[0]
+    mse_sr = sr
+    mse_hr_map = hr_maps.numpy()[0]
+
+    if len(sr.shape) == 2:
+        mse_sr = mse_sr[None, ]
+        mse_hrs = mse_hrs[None, ]
+        mse_hr_map = mse_hr_map[None, ]
+
+    n_clear = np.sum(mse_hr_map, axis=(1, 2))  # number of clear pixels in the high-res patch
+    diff = mse_hrs -mse_sr
+    bias = np.sum(diff * mse_hrs, axis=(1, 2)) / n_clear  # brightness bias
+    cMSE = np.sum(np.square((diff - bias[:, None, None]) * mse_hr_map), axis=(1, 2)) / n_clear
 
 #    print("HRS LEN: ", len(hrs))
 #    print("HRS: ", hrs)
