@@ -92,10 +92,11 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
     else:
         assert (next_sr.ndim == 2)
 
-        print(next_sr)
-        print(next_sr.dtype.type)
-        print("NEXT SR MAX: ", next_sr.max())
-        print("NEXT SR MIN: ", next_sr.min())
+        next_sr = np.clip(next_sr, 0, 1)
+        #print(next_sr)
+        #print(next_sr.dtype.type)
+        #print("NEXT SR MAX: ", next_sr.max())
+        #print("NEXT SR MIN: ", next_sr.min())
 
         if next_sr.dtype.type is np.uint16:  # integer array is in the range [0, 65536]
             next_sr = next_sr / np.iinfo(np.uint16).max  # normalize in the range [0, 1]
