@@ -48,6 +48,9 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
     assert(cur_hr.ndim == 2)
     assert(cur_hr_map.ndim == 2)
 
+    print(cur_sr)
+    print(cur_sr.dtype.type)
+
     if cur_sr.dtype.type is np.uint16:  # integer array is in the range [0, 65536]
         cur_sr = cur_sr / np.iinfo(np.uint16).max  # normalize in the range [0, 1]
     else:
