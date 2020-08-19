@@ -69,36 +69,13 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
     else:
         val_aposterior_SSIM = cSSIM(sr = cur_sr, hr = cur_hr)
 
-    if len(cur_sr.shape) == 2:
-        cur_sr = cur_sr[None, ]
-        cur_hr = cur_hr[None, ]
-        cur_hr_map = cur_hr_map[None, ]
-
-    if len(hrs) > 0:
-        val_cMSE = cMSE(sr= cur_sr, hr= cur_hr, hr_map= cur_hr_map)
-        val_cPSNR = -10 * np.log10(val_cMSE)
-        val_usual_PSNR = -10 * np.log10(val_L2)
-        val_shift_cPSNR = shift_cPSNR(sr = cur_sr, hr=cur_hr, hr_map=cur_hr_map)
-        val_shift_cMSE = shift_cMSE(sr = cur_sr, hr=cur_hr, hr_map=cur_hr_map)
-    else:
-        val_cPSNR = None
-        val_usual_PSNR = None
-        val_shift_cPSNR = None
-        val_cMSE = None
-        val_shift_cMSE = None
 
     if (str(type(next_sr)) == "<class 'NoneType'>"):
         val_delta_cMSE = None
-        val_delta_L2 = None
         val_delta_shift_cMSE = None
+        val_delta_L2 = None
     else:
         assert (next_sr.ndim == 2)
-
-        #next_sr = np.clip(next_sr, 0, 1)
-        #print(next_sr)
-        #print(next_sr.dtype.type)
-        #print("NEXT SR MAX: ", next_sr.max())
-        #print("NEXT SR MIN: ", next_sr.min())
 
         if next_sr.dtype.type is np.uint16:  # integer array is in the range [0, 65536]
             next_sr = next_sr / np.iinfo(np.uint16).max  # normalize in the range [0, 1]
@@ -112,6 +89,25 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
 
         val_delta_cMSE = cMSE(sr = cur_sr, hr = next_sr, hr_map = cur_hr_map)
         val_delta_shift_cMSE = shift_cMSE(sr = cur_sr, hr = next_sr, hr_map = cur_hr_map)
+
+    if len(cur_sr.shape) == 2:
+        cur_sr = cur_sr[None, ]
+        cur_hr = cur_hr[None, ]
+        cur_hr_map = cur_hr_map[None, ]
+
+    if len(hrs) > 0:
+        val_cMSE = cMSE(sr= cur_sr, hr= cur_hr, hr_map= cur_hr_map)
+        val_cPSNR = -10 * np.log10(val_cMSE)
+        val_usual_PSNR = -10 * np.log10(val_L2)
+        val_shift_cPSNR = shift_cPSNR(sr = cur_sr, hr=cur_hr, hr_map=cur_hr_map)
+        val_shift_cMSE = shift_cMSE(sr = cur_sr, hr=cur_hr, hr_map=cur_hr_map)
+    else:
+        val_cMSE = None
+        val_cPSNR = None
+        val_usual_PSNR = None
+        val_shift_cPSNR = None
+        val_shift_cMSE = None
+
 
     return sr, val_gt_SSIM, val_aposterior_SSIM, val_cPSNR, val_usual_PSNR, val_shift_cPSNR, val_cMSE, \
            val_L2, val_shift_cMSE, val_delta_cMSE, val_delta_L2, val_delta_shift_cMSE
