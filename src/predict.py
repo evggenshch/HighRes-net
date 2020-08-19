@@ -4,6 +4,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
 from skimage import io, img_as_uint
 from tqdm import tqdm_notebook, tqdm
 from zipfile import ZipFile
@@ -39,10 +40,11 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
 
     sr = model(lrs, alphas)[:, 0]
     sr = sr.detach().cpu().numpy()[0]
+    sr = np.clip(sr, 0, 1)
 
     cur_hr = hrs.numpy()[0]
     cur_hr_map = hr_maps.numpy()[0]
-    cur_sr = np.clip(sr, 0, 1)
+    cur_sr = sr
 
     assert(cur_sr.ndim == 2)
     assert(cur_hr.ndim == 2)
@@ -73,7 +75,7 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
     if len(hrs) > 0:
         val_cMSE = cMSE(sr= cur_sr, hr= cur_hr, hr_map= cur_hr_map)
         val_cPSNR = -10 * np.log10(val_cMSE)
-        val_L2 = np.linalg.norm(cur_hr - cur_sr)
+        val_L2 = mean_squared_error(cur_hr, cur_sr)
         val_usual_PSNR = -10 * np.log10(val_L2)
         val_shift_cPSNR = shift_cPSNR(sr = cur_sr, hr=cur_hr, hr_map=cur_hr_map)
         val_shift_cMSE = shift_cMSE(sr = cur_sr, hr=cur_hr, hr_map=cur_hr_map)
@@ -92,7 +94,7 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
     else:
         assert (next_sr.ndim == 2)
 
-        next_sr = np.clip(next_sr, 0, 1)
+        #next_sr = np.clip(next_sr, 0, 1)
         #print(next_sr)
         #print(next_sr.dtype.type)
         #print("NEXT SR MAX: ", next_sr.max())
@@ -107,7 +109,7 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
             next_sr = next_sr[None,]
 
         val_delta_cMSE = cMSE(sr = cur_sr, hr = next_sr, hr_map = cur_hr_map)
-        val_delta_L2 = np.linalg.norm(next_sr - cur_sr)
+        val_delta_L2 = mean_squared_error(next_sr, cur_sr)
         val_delta_shift_cMSE = shift_cMSE(sr = cur_sr, hr = next_sr, hr_map = cur_hr_map)
 
     return sr, val_gt_SSIM, val_aposterior_SSIM, val_cPSNR, val_usual_PSNR, val_shift_cPSNR, val_cMSE, \
