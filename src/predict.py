@@ -47,7 +47,6 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
     assert(cur_sr.ndim == 2)
     assert(cur_hr.ndim == 2)
     assert(cur_hr_map.ndim == 2)
-    assert(next_sr.ndim == 2)
 
     if len(cur_sr.shape) == 2:
         cur_sr = cur_sr[None, ]
@@ -94,6 +93,7 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
         val_delta_L2 = None
         val_delta_shift_cMSE = None
     else:
+        assert (next_sr.ndim == 2)
         val_delta_cMSE = cMSE(sr = cur_sr, hr = next_sr)
         val_delta_L2 = np.linalg.norm(next_sr - cur_sr)
         val_delta_shift_cMSE = shift_cMSE(sr = cur_sr, hr = next_sr)
