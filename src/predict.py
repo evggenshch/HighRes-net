@@ -59,8 +59,10 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
 
     if len(hrs) > 0:
         val_gt_SSIM = cSSIM(sr=cur_sr, hr=cur_hr)
+        val_L2 = mean_squared_error(cur_hr, cur_sr)
     else:
         val_gt_SSIM = None
+        val_L2 = None
 
     if (str(type(aposterior_gt)) == "<class 'NoneType'>"):
         val_aposterior_SSIM = 1.0
@@ -75,7 +77,6 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
     if len(hrs) > 0:
         val_cMSE = cMSE(sr= cur_sr, hr= cur_hr, hr_map= cur_hr_map)
         val_cPSNR = -10 * np.log10(val_cMSE)
-        val_L2 = mean_squared_error(cur_hr, cur_sr)
         val_usual_PSNR = -10 * np.log10(val_L2)
         val_shift_cPSNR = shift_cPSNR(sr = cur_sr, hr=cur_hr, hr_map=cur_hr_map)
         val_shift_cMSE = shift_cMSE(sr = cur_sr, hr=cur_hr, hr_map=cur_hr_map)
@@ -84,7 +85,6 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
         val_usual_PSNR = None
         val_shift_cPSNR = None
         val_cMSE = None
-        val_L2 = None
         val_shift_cMSE = None
 
     if (str(type(next_sr)) == "<class 'NoneType'>"):
@@ -105,11 +105,12 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
         else:
             assert 0 <= next_sr.min() and next_sr.max() <= 1, 'sr.dtype must be either uint16 (range 0-65536) or float64 in (0, 1).'
 
+        val_delta_L2 = mean_squared_error(next_sr, cur_sr)
+
         if len(cur_sr.shape) == 2:
             next_sr = next_sr[None,]
 
         val_delta_cMSE = cMSE(sr = cur_sr, hr = next_sr, hr_map = cur_hr_map)
-        val_delta_L2 = mean_squared_error(next_sr, cur_sr)
         val_delta_shift_cMSE = shift_cMSE(sr = cur_sr, hr = next_sr, hr_map = cur_hr_map)
 
     return sr, val_gt_SSIM, val_aposterior_SSIM, val_cPSNR, val_usual_PSNR, val_shift_cPSNR, val_cMSE, \
