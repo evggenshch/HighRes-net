@@ -11,59 +11,11 @@ import torch
 import cv2
 from DataLoader import ImagesetDataset, ImageSet
 from DeepNetworks.HRNet import HRNet
-from Evaluator import shift_cPSNR, cSSIM
+from Evaluator import shift_cPSNR, shift_cMSE, cSSIM, cMSE
 from utils import getImageSetDirectories, readBaselineCPSNR, collateFunction
 
-import itertools
-from DataLoader import get_patch
-from Evaluator import patch_iterator
 
-def cMSE(sr, hr, hr_map):
-
-    if len(sr.shape) == 2:
-        sr = sr[None, ]
-        hr = hr[None, ]
-        hr_map = hr_map[None, ]
-
-    if sr.dtype.type is np.uint16:  # integer array is in the range [0, 65536]
-        sr = sr / np.iinfo(np.uint16).max  # normalize in the range [0, 1]
-    else:
-        assert 0 <= sr.min() and sr.max() <= 1, 'sr.dtype must be either uint16 (range 0-65536) or float64 in (0, 1).'
-    if hr.dtype.type is np.uint16:
-        hr = hr / np.iinfo(np.uint16).max
-
-    n_clear = np.sum(hr_map, axis=(1, 2))  # number of clear pixels in the high-res patch
-    diff = hr - sr
-    bias = np.sum(diff * hr, axis=(1, 2)) / n_clear  # brightness bias
-    cMSE = np.sum(np.square((diff - bias[:, None, None]) * hr_map), axis=(1, 2)) / n_clear
-
-    return cMSE
-
-def shift_cMSE(sr, hr, hr_map, border_w=3):
-    """
-    cPSNR score adjusted for registration errors. Computes the max cPSNR score across shifts of up to `border_w` pixels.
-    Args:
-        sr: np.ndarray (n, m), super-resolved image
-        hr: np.ndarray (n, m), high-res ground-truth image
-        hr_map: np.ndarray (n, m), high-res status map
-        border_w: int, width of the trimming border around `hr` and `hr_map`
-    Returns:
-        max_cPSNR: float, score of the super-resolved image
-    """
-
-    size = sr.shape[1] - (2 * border_w)  # patch size
-    sr = get_patch(img=sr, x=border_w, y=border_w, size=size)
-    pos = list(itertools.product(range(2 * border_w + 1), range(2 * border_w + 1)))
-    iter_hr = patch_iterator(img=hr, positions=pos, size=size)
-    iter_hr_map = patch_iterator(img=hr_map, positions=pos, size=size)
-    site_cMSE = np.array([cMSE(sr, hr, hr_map) for hr, hr_map in tqdm(zip(iter_hr, iter_hr_map),
-                                                                        disable=(len(sr.shape) == 2))
-                           ])
-    min_cMSE = np.min(site_cMSE, axis=0)
-    return min_cMSE
-
-
-def get_sr_and_score(imset, model, aposterior_gt, num_frames, min_L=16):
+def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16):
     '''
     Super resolves an imset with a given model.
     Args:
@@ -88,43 +40,66 @@ def get_sr_and_score(imset, model, aposterior_gt, num_frames, min_L=16):
     sr = model(lrs, alphas)[:, 0]
     sr = sr.detach().cpu().numpy()[0]
 
+    cur_hr = hrs.numpy()[0]
+    cur_hr_map = hr_maps.numpy()[0]
+    cur_sr = np.clip(sr, 0, 1)
 
-#    mse_hrs = hrs.numpy()[0]
-#    mse_sr = sr
-#    mse_hr_map = hr_maps.numpy()[0]
+    assert(cur_sr.ndim == 2)
+    assert(cur_hr.ndim == 2)
+    assert(cur_hr_map.ndim == 2)
+    assert(next_sr.ndim == 2)
 
-#    if len(sr.shape) == 2:
-#        mse_sr = mse_sr[None, ]
-#        mse_hrs = mse_hrs[None, ]
-#        mse_hr_map = mse_hr_map[None, ]
+    if len(cur_sr.shape) == 2:
+        cur_sr = cur_sr[None, ]
+        cur_hr = cur_hr[None, ]
+        cur_hr_map = cur_hr_map[None, ]
+        next_sr = next_sr[None, ]
 
+    if cur_sr.dtype.type is np.uint16:  # integer array is in the range [0, 65536]
+        cur_sr = cur_sr / np.iinfo(np.uint16).max  # normalize in the range [0, 1]
+    else:
+        assert 0 <= cur_sr.min() and cur_sr.max() <= 1, 'sr.dtype must be either uint16 (range 0-65536) or float64 in (0, 1).'
+    if cur_hr.dtype.type is np.uint16:
+        cur_hr = cur_hr / np.iinfo(np.uint16).max
 
-
-
-
-#    print("HRS LEN: ", len(hrs))
-#    print("HRS: ", hrs)
+    if next_sr.dtype.type is np.uint16:  # integer array is in the range [0, 65536]
+        next_sr = next_sr / np.iinfo(np.uint16).max  # normalize in the range [0, 1]
+    else:
+        assert 0 <= next_sr.min() and next_sr.max() <= 1, 'sr.dtype must be either uint16 (range 0-65536) or float64 in (0, 1).'
 
     if len(hrs) > 0:
-        scPSNR = shift_cPSNR(sr=np.clip(sr, 0, 1),
-                             hr=hrs.numpy()[0],
-                             hr_map=hr_maps.numpy()[0])
-        scMSE = shift_cMSE(sr = np.clip(sr, 0, 1), hr=hrs.numpy()[0], hr_map=hr_maps.numpy()[0])
-        ssim = cSSIM(sr=np.clip(sr, 0, 1), hr=hrs.numpy()[0])
+        val_gt_SSIM = cSSIM(sr = cur_sr, hr = cur_hr)
+        val_cMSE = cMSE(sr= cur_sr, hr= cur_hr, hr_map= cur_hr_map)
+        val_cPSNR = -10 * np.log10(val_cMSE)
+        val_L2 = np.linalg.norm(cur_hr - cur_sr)
+        val_usual_PSNR = -10 * np.log10(val_L2)
+        val_shift_cPSNR = shift_cPSNR(sr = cur_sr, hr=cur_hr, hr_map=cur_hr_map)
+        val_shift_cMSE = shift_cMSE(sr = cur_sr, hr=cur_hr, hr_map=cur_hr_map)
     else:
-        scPSNR = None
-        scMSE = None
-        ssim = None
-
-    #   print("APGT SHAPE: ", aposterior_gt.shape)
-    #   print("APGT: ", aposterior_gt)
+        val_gt_SSIM = None
+        val_cPSNR = None
+        val_usual_PSNR = None
+        val_shift_cPSNR = None
+        val_cMSE = None
+        val_L2 = None
+        val_shift_cMSE = None
 
     if (str(type(aposterior_gt)) == "<class 'NoneType'>"):
-        aposterior_ssim = 1.0
+        val_aposterior_SSIM = 1.0
     else:
-        aposterior_ssim = cSSIM(sr=np.clip(sr, 0, 1), hr=np.clip(aposterior_gt, 0, 1))
+        val_aposterior_SSIM = cSSIM(sr = cur_sr, hr = cur_hr)
 
-    return sr, scPSNR, ssim, aposterior_ssim, scMSE
+    if (str(type(next_sr)) == "<class 'NoneType'>"):
+        val_delta_cMSE = None
+        val_delta_L2 = None
+        val_delta_shift_cMSE = None
+    else:
+        val_delta_cMSE = cMSE(sr = cur_sr, hr = next_sr)
+        val_delta_L2 = np.linalg.norm(next_sr - cur_sr)
+        val_delta_shift_cMSE = shift_cMSE(sr = cur_sr, hr = next_sr)
+
+    return sr, val_gt_SSIM, val_aposterior_SSIM, val_cPSNR, val_usual_PSNR, val_shift_cPSNR, val_cMSE, \
+           val_L2, val_shift_cMSE, val_delta_cMSE, val_delta_L2, val_delta_shift_cMSE
 
 
 def load_data(config_file_path, val_proportion=0.10, top_k=-1):
@@ -305,9 +280,12 @@ class Model(object):
     def load_checkpoint(self, checkpoint_file):
         self.model = load_model(self.config, checkpoint_file)
         
-    def __call__(self, imset, aposterior_gt, num_frames, custom_min_L = 16):
-        sr, scPSNR, gt_SSIM, aposterior_SSIM, cMSE = get_sr_and_score(imset, self.model, aposterior_gt, num_frames, min_L= custom_min_L)#self.config['training']['min_L'])
-        return sr, scPSNR, gt_SSIM, aposterior_SSIM, cMSE
+    def __call__(self, imset, aposterior_gt, next_sr, num_frames, custom_min_L = 16):
+        sr, val_gt_SSIM, val_aposterior_SSIM, val_cPSNR, val_usual_PSNR, val_shift_cPSNR, val_cMSE, \
+        val_L2, val_shift_cMSE, val_delta_cMSE, val_delta_L2, \
+        val_delta_shift_cMSE = get_sr_and_score(imset, self.model, aposterior_gt, next_sr, num_frames, min_L= custom_min_L)#self.config['training']['min_L'])
+        return sr, val_gt_SSIM, val_aposterior_SSIM, val_cPSNR, val_usual_PSNR, val_shift_cPSNR, val_cMSE, \
+               val_L2, val_shift_cMSE, val_delta_cMSE, val_delta_L2, val_delta_shift_cMSE
     
     def evaluate(self, train_dataset, val_dataset, test_dataset, baseline_cpsnrs):                
         scores, clearance, part = evaluate(self.model, train_dataset, val_dataset, test_dataset, 
