@@ -99,9 +99,9 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
         else:
             assert 0 <= next_sr.min() and next_sr.max() <= 1, 'sr.dtype must be either uint16 (range 0-65536) or float64 in (0, 1).'
 
-        val_delta_cMSE = cMSE(sr = cur_sr, hr = next_sr)
+        val_delta_cMSE = cMSE(sr = cur_sr, hr = next_sr, hr_map = cur_hr_map)
         val_delta_L2 = np.linalg.norm(next_sr - cur_sr)
-        val_delta_shift_cMSE = shift_cMSE(sr = cur_sr, hr = next_sr)
+        val_delta_shift_cMSE = shift_cMSE(sr = cur_sr, hr = next_sr, hr_map = cur_hr_map)
 
     return sr, val_gt_SSIM, val_aposterior_SSIM, val_cPSNR, val_usual_PSNR, val_shift_cPSNR, val_cMSE, \
            val_L2, val_shift_cMSE, val_delta_cMSE, val_delta_L2, val_delta_shift_cMSE
