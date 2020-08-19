@@ -120,7 +120,7 @@ def cSSIM(sr, hr):
    # if hr.dtype.type is np.uint16:
    #     hr = hr / np.iinfo(np.uint16).max
 
-    cSSIM = ssim(sr[None, :, :], hr[None, :, :], multichannel=True, data_range=1.0)
+    cSSIM = ssim(sr, hr, multichannel=True, data_range=1.0)
 
     return cSSIM
 

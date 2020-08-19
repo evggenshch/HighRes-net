@@ -48,11 +48,6 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
     assert(cur_hr.ndim == 2)
     assert(cur_hr_map.ndim == 2)
 
-    if len(cur_sr.shape) == 2:
-        cur_sr = cur_sr[None, ]
-        cur_hr = cur_hr[None, ]
-        cur_hr_map = cur_hr_map[None, ]
-
     if cur_sr.dtype.type is np.uint16:  # integer array is in the range [0, 65536]
         cur_sr = cur_sr / np.iinfo(np.uint16).max  # normalize in the range [0, 1]
     else:
@@ -60,9 +55,22 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
     if cur_hr.dtype.type is np.uint16:
         cur_hr = cur_hr / np.iinfo(np.uint16).max
 
+    if len(hrs) > 0:
+        val_gt_SSIM = cSSIM(sr=cur_sr, hr=cur_hr)
+    else:
+        val_gt_SSIM = None
+
+    if (str(type(aposterior_gt)) == "<class 'NoneType'>"):
+        val_aposterior_SSIM = 1.0
+    else:
+        val_aposterior_SSIM = cSSIM(sr = cur_sr, hr = cur_hr)
+
+    if len(cur_sr.shape) == 2:
+        cur_sr = cur_sr[None, ]
+        cur_hr = cur_hr[None, ]
+        cur_hr_map = cur_hr_map[None, ]
 
     if len(hrs) > 0:
-        val_gt_SSIM = cSSIM(sr = cur_sr, hr = cur_hr)
         val_cMSE = cMSE(sr= cur_sr, hr= cur_hr, hr_map= cur_hr_map)
         val_cPSNR = -10 * np.log10(val_cMSE)
         val_L2 = np.linalg.norm(cur_hr - cur_sr)
@@ -70,18 +78,12 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
         val_shift_cPSNR = shift_cPSNR(sr = cur_sr, hr=cur_hr, hr_map=cur_hr_map)
         val_shift_cMSE = shift_cMSE(sr = cur_sr, hr=cur_hr, hr_map=cur_hr_map)
     else:
-        val_gt_SSIM = None
         val_cPSNR = None
         val_usual_PSNR = None
         val_shift_cPSNR = None
         val_cMSE = None
         val_L2 = None
         val_shift_cMSE = None
-
-    if (str(type(aposterior_gt)) == "<class 'NoneType'>"):
-        val_aposterior_SSIM = 1.0
-    else:
-        val_aposterior_SSIM = cSSIM(sr = cur_sr, hr = cur_hr)
 
     if (str(type(next_sr)) == "<class 'NoneType'>"):
         val_delta_cMSE = None
