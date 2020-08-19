@@ -96,7 +96,7 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
             next_sr = next_sr / np.iinfo(np.uint16).max  # normalize in the range [0, 1]
         else:
             assert 0 <= next_sr.min() and next_sr.max() <= 1, 'sr.dtype must be either uint16 (range 0-65536) or float64 in (0, 1).'
-            
+
         val_delta_cMSE = cMSE(sr = cur_sr, hr = next_sr)
         val_delta_L2 = np.linalg.norm(next_sr - cur_sr)
         val_delta_shift_cMSE = shift_cMSE(sr = cur_sr, hr = next_sr)
