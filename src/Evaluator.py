@@ -10,11 +10,18 @@ from skimage.metrics import structural_similarity as ssim
 from DataLoader import get_patch
 
 
+
+def patch_iterator(img, positions, size):
+    """Iterator across square patches of `img` located in `positions`."""
+    for x, y in positions:
+        yield get_patch(img=img, x=x, y=y, size=size)
+
+
 def cMSE(sr, hr, hr_map):
 
     n_clear = np.sum(hr_map, axis=(1, 2))  # number of clear pixels in the high-res patch
     diff = hr - sr
-    bias = np.sum(diff * hr, axis=(1, 2)) / n_clear  # brightness bias
+    bias = np.sum(diff * hr_map, axis=(1, 2)) / n_clear  # brightness bias
     cMSE = np.sum(np.square((diff - bias[:, None, None]) * hr_map), axis=(1, 2)) / n_clear
 
     return cMSE
@@ -78,12 +85,6 @@ def cPSNR(sr, hr, hr_map):
 
 
 
-def patch_iterator(img, positions, size):
-    """Iterator across square patches of `img` located in `positions`."""
-    for x, y in positions:
-        yield get_patch(img=img, x=x, y=y, size=size)
-
-
 def shift_cPSNR(sr, hr, hr_map, border_w=3):
     """
     cPSNR score adjusted for registration errors. Computes the max cPSNR score across shifts of up to `border_w` pixels.
@@ -120,9 +121,9 @@ def cSSIM(sr, hr):
    # if hr.dtype.type is np.uint16:
    #     hr = hr / np.iinfo(np.uint16).max
 
-    cSSIM = ssim(sr, hr, multichannel=True, data_range=1.0)
+    cSSIM = ssim(sr, hr, win_size=7, multichannel=False, data_range=1.0)
 
     return cSSIM
 
-def shift_SSIM(sr, hr, hr_map):
+def shift_cSSIM(sr, hr, hr_map):
     pass

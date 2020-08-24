@@ -67,7 +67,7 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
     if (str(type(aposterior_gt)) == "<class 'NoneType'>"):
         val_aposterior_SSIM = 1.0
     else:
-        val_aposterior_SSIM = cSSIM(sr = cur_sr, hr = cur_hr)
+        val_aposterior_SSIM = cSSIM(sr = cur_sr, hr = aposterior_gt)
 
 
     if (str(type(next_sr)) == "<class 'NoneType'>"):
