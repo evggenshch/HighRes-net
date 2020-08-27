@@ -140,24 +140,24 @@ def load_data(config_file_path, val_proportion=0.10, top_k=-1):
     # val_proportion = 0.10
     train_list, val_list = train_test_split(train_set_directories,
                                             test_size=val_proportion, random_state=1, shuffle=True)
-    val_list = ["imgset0000", "imgset0061",  "imgset0203",  "imgset0280",  "imgset0374",  "imgset0476",  "imgset0585",
-                "imgset0692",  "imgset0769",  "imgset0845",  "imgset0960",  "imgset1039",  "imgset1128",
-"imgset0011",  "imgset0072",  "imgset0204",  "imgset0285",  "imgset0382",  "imgset0498",  "imgset0588",  "imgset0711",
-                "imgset0771", "imgset0878",  "imgset0962",  "imgset1052",  "imgset1133",
-"imgset0023",  "imgset0085",  "imgset0205",  "imgset0289",  "imgset0414",  "imgset0499",  "imgset0602",  "imgset0728",
-                "imgset0776", "imgset0884",  "imgset0980",  "imgset1054",  "imgset1134",
-"imgset0035",  "imgset0087",  "imgset0208",  "imgset0313",  "imgset0448",  "imgset0503",  "imgset0604",  "imgset0730",
-                "imgset0791",  "imgset0896",  "imgset0998",  "imgset1063",  "imgset1158",
-"imgset0039",  "imgset0114",  "imgset0221",  "imgset0324",  "imgset0450",  "imgset0505",  "imgset0617",  "imgset0734",
-                "imgset0793",  "imgset0921",  "imgset1013",  "imgset1068",
-"imgset0047",  "imgset0130",  "imgset0235",  "imgset0328",  "imgset0458",  "imgset0530",  "imgset0618",  "imgset0748",
-                "imgset0796",  "imgset0923",  "imgset1015",  "imgset1089",
-"imgset0051",  "imgset0138",  "imgset0255",  "imgset0337",  "imgset0460",  "imgset0534",  "imgset0652",  "imgset0751",
-                "imgset0811",  "imgset0933",  "imgset1021",  "imgset1112",
-"imgset0056",  "imgset0164",  "imgset0262",  "imgset0340",  "imgset0465",  "imgset0549",  "imgset0674",  "imgset0758",
-                "imgset0814",  "imgset0948",  "imgset1023",  "imgset1121",
-"imgset0057",  "imgset0192",  "imgset0270",  "imgset0361",  "imgset0470",  "imgset0558",  "imgset0687",  "imgset0762",
-                "imgset0817",  "imgset0951",  "imgset1034",  "imgset1126"]
+   # val_list = ["imgset0000", "imgset0061",  "imgset0203",  "imgset0280",  "imgset0374",  "imgset0476",  "imgset0585",
+   #             "imgset0692",  "imgset0769",  "imgset0845",  "imgset0960",  "imgset1039",  "imgset1128",
+#"imgset0011",  "imgset0072",  "imgset0204",  "imgset0285",  "imgset0382",  "imgset0498",  "imgset0588",  "imgset0711",
+#                "imgset0771", "imgset0878",  "imgset0962",  "imgset1052",  "imgset1133",
+#"imgset0023",  "imgset0085",  "imgset0205",  "imgset0289",  "imgset0414",  "imgset0499",  "imgset0602",  "imgset0728",
+#                "imgset0776", "imgset0884",  "imgset0980",  "imgset1054",  "imgset1134",
+#"imgset0035",  "imgset0087",  "imgset0208",  "imgset0313",  "imgset0448",  "imgset0503",  "imgset0604",  "imgset0730",
+#                "imgset0791",  "imgset0896",  "imgset0998",  "imgset1063",  "imgset1158",
+#"imgset0039",  "imgset0114",  "imgset0221",  "imgset0324",  "imgset0450",  "imgset0505",  "imgset0617",  "imgset0734",
+#                "imgset0793",  "imgset0921",  "imgset1013",  "imgset1068",
+#"imgset0047",  "imgset0130",  "imgset0235",  "imgset0328",  "imgset0458",  "imgset0530",  "imgset0618",  "imgset0748",
+#                "imgset0796",  "imgset0923",  "imgset1015",  "imgset1089",
+#"imgset0051",  "imgset0138",  "imgset0255",  "imgset0337",  "imgset0460",  "imgset0534",  "imgset0652",  "imgset0751",
+#                "imgset0811",  "imgset0933",  "imgset1021",  "imgset1112",
+#"imgset0056",  "imgset0164",  "imgset0262",  "imgset0340",  "imgset0465",  "imgset0549",  "imgset0674",  "imgset0758",
+#                "imgset0814",  "imgset0948",  "imgset1023",  "imgset1121",
+#"imgset0057",  "imgset0192",  "imgset0270",  "imgset0361",  "imgset0470",  "imgset0558",  "imgset0687",  "imgset0762",
+#                "imgset0817",  "imgset0951",  "imgset1034",  "imgset1126"]
     config["training"]["create_patches"] = False
 
     train_dataset = ImagesetDataset(imset_dir=train_list, config=config["training"], top_k=top_k)
