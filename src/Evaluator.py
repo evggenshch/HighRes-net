@@ -78,7 +78,7 @@ def cPSNR(sr, hr, hr_map):
     val_cMSE = np.sum(np.square((diff - bias[:, None, None]) * hr_map), axis=(1, 2)) / n_clear
     val_cPSNR = -10 * np.log10(val_cMSE)  # + 1e-10)
 
-    print("CPSNR SHAPE: ", val_cPSNR)
+    print("CPSNR SHAPE: ", val_cPSNR.shape)
 
     if val_cPSNR.shape[0] == 1:
         val_cPSNR = val_cPSNR[0]
