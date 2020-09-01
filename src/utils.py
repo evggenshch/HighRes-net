@@ -101,7 +101,7 @@ class collateFunction():
                 #pad = torch.zeros(self.min_L - L, H, W) # lrs[:self.min_L - L] #
                 lr_batch.append(torch.cat([lrs, pad], dim=0))
                 #alpha_batch.append(torch.cat([torch.ones(L), torch.ones(self.min_L - L)], dim=0))
-                alpha_batch.append(torch.cat([torch.ones(L), torch.ones(self.min_L - L)], dim=0))
+                alpha_batch.append(torch.cat([torch.ones(L), torch.zeros(self.min_L - L)], dim=0))
 
             hr = imageset['hr']
             if train_batch and hr is not None:
