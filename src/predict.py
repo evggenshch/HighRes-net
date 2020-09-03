@@ -36,8 +36,11 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    print("LRS SHAPE:", lrs.shape)
-    print("ALPHAS SHAPE", alphas.shape)
+    #print("LRS SHAPE:", lrs.shape)
+    #print("ALPHAS SHAPE", alphas.shape)
+
+    lrs = lrs[:, :num_frames, :, :]
+    alphas = alphas[:, :num_frames]
 
     lrs = lrs.float().to(device)
     alphas = alphas.float().to(device)
