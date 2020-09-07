@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
+from skimage.transform import downscale_local_mean
 from skimage import io, img_as_uint
 from tqdm import tqdm_notebook, tqdm
 from zipfile import ZipFile
@@ -49,9 +50,14 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
     sr = sr.detach().cpu().numpy()[0]
     sr = np.clip(sr, 0, 1)
 
+    sr = downscale_local_mean(sr, (2, 2))
+
     cur_hr = hrs.numpy()[0]
     cur_hr_map = hr_maps.numpy()[0]
     cur_sr = sr
+
+    cur_hr = downscale_local_mean(cur_hr, (2, 2))
+    cur_hr_map = downscale_local_mean(cur_hr_map, (2, 2))
 
     assert(cur_sr.ndim == 2)
     assert(cur_hr.ndim == 2)
@@ -74,6 +80,7 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
     if (str(type(aposterior_gt)) == "<class 'NoneType'>"):
         val_aposterior_SSIM = 1.0
     else:
+        aposterior_gt = downscale_local_mean(aposterior_gt, (2, 2))
         val_aposterior_SSIM = cSSIM(sr = cur_sr, hr = aposterior_gt)
 
 
