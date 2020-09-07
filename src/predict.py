@@ -80,7 +80,6 @@ def get_sr_and_score(imset, model, aposterior_gt, next_sr, num_frames, min_L=16)
     if (str(type(aposterior_gt)) == "<class 'NoneType'>"):
         val_aposterior_SSIM = 1.0
     else:
-        aposterior_gt = downscale_local_mean(aposterior_gt, (2, 2))
         val_aposterior_SSIM = cSSIM(sr = cur_sr, hr = aposterior_gt)
 
 
