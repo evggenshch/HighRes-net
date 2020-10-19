@@ -43,7 +43,7 @@ def shift_cMSE(sr, hr, hr_map, border_w=3):
     pos = list(itertools.product(range(2 * border_w + 1), range(2 * border_w + 1)))
     iter_hr = patch_iterator(img=hr, positions=pos, size=size)
     iter_hr_map = patch_iterator(img=hr_map, positions=pos, size=size)
-    site_cMSE = np.array([cMSE(sr, hr, hr_map) for hr, hr_map in tqdm(zip(iter_hr, iter_hr_map),
+    site_cMSE = np.array([cMSE(sr, cur_hr, cur_hr_map) for cur_hr, cur_hr_map in tqdm(zip(iter_hr, iter_hr_map),
                                                                         disable=(len(sr.shape) == 2))
                            ])
     min_cMSE = np.min(site_cMSE, axis=0)
@@ -102,7 +102,7 @@ def shift_cPSNR(sr, hr, hr_map, border_w=3):
     pos = list(itertools.product(range(2 * border_w + 1), range(2 * border_w + 1)))
     iter_hr = patch_iterator(img=hr, positions=pos, size=size)
     iter_hr_map = patch_iterator(img=hr_map, positions=pos, size=size)
-    site_cPSNR = np.array([cPSNR(sr, hr, hr_map) for hr, hr_map in tqdm(zip(iter_hr, iter_hr_map),
+    site_cPSNR = np.array([cPSNR(sr, cur_hr, cur_hr_map) for cur_hr, cur_hr_map in tqdm(zip(iter_hr, iter_hr_map),
                                                                         disable=(len(sr.shape) == 2))
                            ])
     max_cPSNR = np.max(site_cPSNR, axis=0)
